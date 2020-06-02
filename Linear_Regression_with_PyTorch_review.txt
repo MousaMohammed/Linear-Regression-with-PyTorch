@@ -1,0 +1,1319 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Linear Regression with PyTorch review.ipynb",
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "cnCczNCh9Olb",
+        "colab_type": "text"
+      },
+      "source": [
+        "We begin by importing Numpy and PyTorch:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ZHMGTAuI9Ffg",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import torch\n",
+        "import numpy as np"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Lb69Vzy5Eqw5",
+        "colab_type": "text"
+      },
+      "source": [
+        "##Training data\n",
+        "The training data can be represented using 2 matrices: inputs and targets, each with one row per observation, and one column per variable."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ZdYha7D1-CfO",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "# Input (temp, rainfall, humidity)\n",
+        "inputs = np.array([[73, 67, 43],\n",
+        "                   [91, 88, 64], \n",
+        "                   [87, 134, 58], \n",
+        "                   [102, 43, 37], \n",
+        "                   [69, 96, 70]], dtype='float32')\n",
+        "\n",
+        "\n",
+        "targets = np.array([[56, 70], \n",
+        "                    [81, 101], \n",
+        "                    [119, 133], \n",
+        "                    [22, 37], \n",
+        "                    [103, 119]], dtype='float32')"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "hQ1pmHa9EzPE",
+        "colab_type": "code",
+        "outputId": "798b7ce4-2a83-4985-ddc8-648c61cf453d",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 187
+        }
+      },
+      "source": [
+        "# Convert inputs and targets to tensors\n",
+        "inputs  = torch.from_numpy(inputs)\n",
+        "targets = torch.from_numpy(targets)\n",
+        "\n",
+        "print(inputs)\n",
+        "print(targets)"
+      ],
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 73.,  67.,  43.],\n",
+            "        [ 91.,  88.,  64.],\n",
+            "        [ 87., 134.,  58.],\n",
+            "        [102.,  43.,  37.],\n",
+            "        [ 69.,  96.,  70.]])\n",
+            "tensor([[ 56.,  70.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.],\n",
+            "        [ 22.,  37.],\n",
+            "        [103., 119.]])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zE9s34iXFTTQ",
+        "colab_type": "code",
+        "outputId": "2f2c3a89-bb24-499d-f561-d446f271ca23",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 68
+        }
+      },
+      "source": [
+        "# wieghts and baiess\n",
+        "w = torch.randn(2,3,requires_grad=True)\n",
+        "b = torch.randn(2,requires_grad=True)\n",
+        "print(w)\n",
+        "print(b)"
+      ],
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 0.6216, -0.3608, -0.3145],\n",
+            "        [-1.4892, -0.1314, -1.1788]], requires_grad=True)\n",
+            "tensor([2.4526, 2.1662], requires_grad=True)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "48cudGW7FhVy",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "def model(x):\n",
+        "  return x @ w.t() + b"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Qp0dr1cVFqtn",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "predicts = model(inputs)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "lxIedFEpGa9g",
+        "colab_type": "code",
+        "outputId": "9d01332a-66ca-4dbe-dafa-e993e9ec7c66",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 102
+        }
+      },
+      "source": [
+        "predicts"
+      ],
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "tensor([[  10.1301, -166.0344],\n",
+              "        [   7.1369, -220.3533],\n",
+              "        [ -10.0611, -213.3669],\n",
+              "        [  38.7041, -198.9948],\n",
+              "        [ -11.3123, -195.7151]], grad_fn=<AddBackward0>)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 7
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Q8efeEBIG1qP",
+        "colab_type": "code",
+        "outputId": "dbf9e24a-4566-48fb-9c18-590c15752abb",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 102
+        }
+      },
+      "source": [
+        "print(targets)"
+      ],
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 56.,  70.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.],\n",
+            "        [ 22.,  37.],\n",
+            "        [103., 119.]])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "DGfuTRfVLmIO",
+        "colab_type": "text"
+      },
+      "source": [
+        "##Loss function\n",
+        "Before we improve our model, we need a way to evaluate how well our model is performing. We can compare the model's predictions with the actual targets, using the following method:\n",
+        "\n",
+        "* Calculate the difference between the two matrices (preds and targets).\n",
+        "* Square all elements of the difference matrix to remove negative values.\n",
+        "* Calculate the average of the elements in the resulting matrix.\n",
+        "The result is a single number, known as the mean squared error (MSE)."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "1DVNTnUIHF7R",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "def mse(t1 , t2):\n",
+        "  diff = t1- t2\n",
+        "  #deff = deff * deff\n",
+        "\n",
+        "  return torch.sum(diff * diff) / diff.numel()\n",
+        "\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ClhRl7hlMtu5",
+        "colab_type": "code",
+        "outputId": "bf35dd10-ddf5-47ed-bd59-f34eac707e17",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        }
+      },
+      "source": [
+        "loss = mse(predicts , targets)\n",
+        "loss"
+      ],
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "tensor(47125.2305, grad_fn=<DivBackward0>)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 10
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "KFG3sdJRNBd1",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "loss.backward()"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "di0lEdSyNC09",
+        "colab_type": "code",
+        "outputId": "499e20c0-5ea5-4a19-8331-d7cc8c83c0b9",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 136
+        }
+      },
+      "source": [
+        "print(w)\n",
+        "print(w.grad)\n",
+        "print(\"#\" * 40)\n",
+        "print(b)\n",
+        "print(b.grad)"
+      ],
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 0.6216, -0.3608, -0.3145],\n",
+            "        [-1.4892, -0.1314, -1.1788]], requires_grad=True)\n",
+            "tensor([[ -5496.4199,  -7424.6270,  -4313.8008],\n",
+            "        [-24478.8789, -26173.3965, -16313.4473]])\n",
+            "########################################\n",
+            "tensor([2.4526, 2.1662], requires_grad=True)\n",
+            "tensor([ -69.2805, -290.8929])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "QszdDiEtNYCl",
+        "colab_type": "code",
+        "outputId": "2a7f3bf4-7f38-4c64-f172-2f6c7635d0ae",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 68
+        }
+      },
+      "source": [
+        "w.grad.zero_()\n",
+        "b.grad.zero_()\n",
+        "print(w.grad)\n",
+        "print(b.grad)"
+      ],
+      "execution_count": 13,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[0., 0., 0.],\n",
+            "        [0., 0., 0.]])\n",
+            "tensor([0., 0.])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dmPTs3ZBOG4B",
+        "colab_type": "text"
+      },
+      "source": [
+        "##Adjust weights and biases using gradient descent\n",
+        "We'll reduce the loss and improve our model using the gradient descent optimization algorithm, which has the following steps:\n",
+        "\n",
+        "1. Generate predictions\n",
+        "\n",
+        "1. Calculate the loss\n",
+        "\n",
+        "1. Compute gradients w.r.t the weights and biases\n",
+        "\n",
+        "1. Adjust the weights by subtracting a small quantity proportional to the gradient\n",
+        "\n",
+        "1. Reset the gradients to zero\n",
+        "\n",
+        "Let's implement the above step by step."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "TXhEgHZlNoqP",
+        "colab_type": "code",
+        "outputId": "1fb45afd-35e9-4e9a-cce7-47fb80f1d600",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 102
+        }
+      },
+      "source": [
+        "preds = model(inputs)\n",
+        "preds"
+      ],
+      "execution_count": 14,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "tensor([[  10.1301, -166.0344],\n",
+              "        [   7.1369, -220.3533],\n",
+              "        [ -10.0611, -213.3669],\n",
+              "        [  38.7041, -198.9948],\n",
+              "        [ -11.3123, -195.7151]], grad_fn=<AddBackward0>)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 14
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "xDbYODhTOEL4",
+        "colab_type": "code",
+        "outputId": "791c6fe6-0a2b-4323-f431-05e2cb7c519b",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        }
+      },
+      "source": [
+        "loss = mse(preds,targets)\n",
+        "print(loss)"
+      ],
+      "execution_count": 15,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor(47125.2305, grad_fn=<DivBackward0>)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "wF66_V6QQNfT",
+        "colab_type": "code",
+        "outputId": "eb2cc5a8-d89c-432f-c0ed-ced661adc48f",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 68
+        }
+      },
+      "source": [
+        "#compute the gradient\n",
+        "loss.backward()\n",
+        "print(w.grad)\n",
+        "print(b.grad)"
+      ],
+      "execution_count": 16,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ -5496.4199,  -7424.6270,  -4313.8008],\n",
+            "        [-24478.8789, -26173.3965, -16313.4473]])\n",
+            "tensor([ -69.2805, -290.8929])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "beyBGtQqQdRF",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "#Adjust the weights by subtracting a small quantity proportional to the gradien\n",
+        "\n",
+        "with torch.no_grad():\n",
+        "  w -= w.grad * 1e-5\n",
+        "  b -= b.grad * 1e-5\n",
+        "  w.grad.zero_()\n",
+        "  b.grad.zero_()"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "b0zMWDqAQ8bl",
+        "colab_type": "code",
+        "outputId": "b778c139-5088-4ac5-e93f-351b61a8a9c0",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 68
+        }
+      },
+      "source": [
+        "print(w)\n",
+        "print(b)"
+      ],
+      "execution_count": 18,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 0.6766, -0.2866, -0.2714],\n",
+            "        [-1.2444,  0.1304, -1.0157]], requires_grad=True)\n",
+            "tensor([2.4533, 2.1691], requires_grad=True)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "bcVKVKYaRPZr",
+        "colab_type": "code",
+        "outputId": "df25c37a-17b5-49ea-df4b-77eab78db57c",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        }
+      },
+      "source": [
+        "# With the new weights and biases, the model should have lower loss.\n",
+        "preds = model(inputs)\n",
+        "loss = mse(preds, targets)\n",
+        "print(loss)"
+      ],
+      "execution_count": 19,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor(32061.5098, grad_fn=<DivBackward0>)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "AgHMSir9RxS5",
+        "colab_type": "text"
+      },
+      "source": [
+        "##Train for multiple epochs\n",
+        "To reduce the loss further, we can repeat the process of adjusting the weights and biases using the gradients multiple times. Each iteration is called an epoch. Let's train the model for 100 epochs."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "V4HGynRIRYAk",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "for i in range(300):\n",
+        "  preds = model(inputs)\n",
+        "  loss = mse(preds, targets)\n",
+        "  loss.backward()\n",
+        "\n",
+        "  with torch.no_grad():\n",
+        "    w -= w.grad * 1e-5\n",
+        "    b -= b.grad * 1e-5\n",
+        "    w.grad.zero_()\n",
+        "    b.grad.zero_()"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "G7nAO6V0SoC4",
+        "colab_type": "code",
+        "outputId": "c7e0b9b0-10df-4e60-a79b-46a0da22dbeb",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        }
+      },
+      "source": [
+        "print(loss)"
+      ],
+      "execution_count": 21,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor(77.3464, grad_fn=<DivBackward0>)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zk2mu-5GSy6K",
+        "colab_type": "code",
+        "outputId": "8158bb3b-968a-4213-8876-c7e719a7a0a5",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 187
+        }
+      },
+      "source": [
+        "print(preds)\n",
+        "print(targets)"
+      ],
+      "execution_count": 22,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 59.9304,  71.3364],\n",
+            "        [ 79.8904,  93.6404],\n",
+            "        [119.5237, 147.3016],\n",
+            "        [ 34.3505,  40.0848],\n",
+            "        [ 90.6301, 105.5478]], grad_fn=<AddBackward0>)\n",
+            "tensor([[ 56.,  70.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.],\n",
+            "        [ 22.,  37.],\n",
+            "        [103., 119.]])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "SVMgqwcfTPRL",
+        "colab_type": "text"
+      },
+      "source": [
+        "## Linear regression using PyTorch built-ins\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "siEPR_VoTVdI",
+        "colab_type": "text"
+      },
+      "source": [
+        "The model and training process above were implemented using basic matrix operations. But since this such a common pattern , PyTorch has several built-in functions and classes to make it easy to create and train models.\n",
+        "\n",
+        "Let's begin by importing the torch.nn package from PyTorch, which contains utility classes for building neural networks."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "PHldVXBDTAAr",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import torch.nn as nn"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "k426WszkTeho",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "# Input (temp, rainfall, humidity)\n",
+        "inputs = np.array([[73, 67, 43], [91, 88, 64], [87, 134, 58], \n",
+        "                   [102, 43, 37], [69, 96, 70], [73, 67, 43], \n",
+        "                   [91, 88, 64], [87, 134, 58], [102, 43, 37], \n",
+        "                   [69, 96, 70], [73, 67, 43], [91, 88, 64], \n",
+        "                   [87, 134, 58], [102, 43, 37], [69, 96, 70]], \n",
+        "                  dtype='float32')\n",
+        "\n",
+        "# Targets (apples, oranges)\n",
+        "targets = np.array([[56, 70], [81, 101], [119, 133], \n",
+        "                    [22, 37], [103, 119], [56, 70], \n",
+        "                    [81, 101], [119, 133], [22, 37], \n",
+        "                    [103, 119], [56, 70], [81, 101], \n",
+        "                    [119, 133], [22, 37], [103, 119]], \n",
+        "                   dtype='float32')\n",
+        "\n",
+        "inputs  = torch.from_numpy(inputs)\n",
+        "targets = torch.from_numpy(targets)"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "pxQRc7nPT1kl",
+        "colab_type": "text"
+      },
+      "source": [
+        "##Dataset and DataLoader\n",
+        "We'll create a TensorDataset, which allows access to rows from inputs and targets as tuples, and provides standard APIs for working with many different types of datasets in PyTorch."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Kw1_9gZBTlDc",
+        "colab_type": "code",
+        "outputId": "1c0132bd-4e85-4386-c91d-3900d6f277ee",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 0
+        }
+      },
+      "source": [
+        "from torch.utils.data import TensorDataset\n",
+        "\n",
+        "train_ds = TensorDataset(inputs, targets)\n",
+        "print(train_ds[:3])"
+      ],
+      "execution_count": 25,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "(tensor([[ 73.,  67.,  43.],\n",
+            "        [ 91.,  88.,  64.],\n",
+            "        [ 87., 134.,  58.]]), tensor([[ 56.,  70.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.]]))\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "yqVX_r7sUrgZ",
+        "colab_type": "text"
+      },
+      "source": [
+        "The TensorDataset allows us to access a small section of the training data using the array indexing notation ([0:3] in the above code). It returns a tuple (or pair), in which the first element contains the input variables for the selected rows, and the second contains the targets.\n",
+        "\n",
+        "We'll also create a DataLoader, which can split the data into batches of a predefined size while training. It also provides other utilities like shuffling and random sampling of the data."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Yia-DIu_URoi",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "from torch.utils.data import DataLoader\n",
+        "batch = 5\n",
+        "train_dl = DataLoader(train_ds, batch , shuffle=True )"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "dz7vta_pUqD5",
+        "colab_type": "code",
+        "outputId": "7329591c-c7a5-4054-d4c8-c01d37a43a89",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 0
+        }
+      },
+      "source": [
+        "for xb , yb in train_dl:\n",
+        "  print(xb)\n",
+        "  print(yb)"
+      ],
+      "execution_count": 27,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 87., 134.,  58.],\n",
+            "        [ 73.,  67.,  43.],\n",
+            "        [ 73.,  67.,  43.],\n",
+            "        [102.,  43.,  37.],\n",
+            "        [ 73.,  67.,  43.]])\n",
+            "tensor([[119., 133.],\n",
+            "        [ 56.,  70.],\n",
+            "        [ 56.,  70.],\n",
+            "        [ 22.,  37.],\n",
+            "        [ 56.,  70.]])\n",
+            "tensor([[102.,  43.,  37.],\n",
+            "        [ 91.,  88.,  64.],\n",
+            "        [ 69.,  96.,  70.],\n",
+            "        [ 69.,  96.,  70.],\n",
+            "        [ 87., 134.,  58.]])\n",
+            "tensor([[ 22.,  37.],\n",
+            "        [ 81., 101.],\n",
+            "        [103., 119.],\n",
+            "        [103., 119.],\n",
+            "        [119., 133.]])\n",
+            "tensor([[ 69.,  96.,  70.],\n",
+            "        [102.,  43.,  37.],\n",
+            "        [ 91.,  88.,  64.],\n",
+            "        [ 91.,  88.,  64.],\n",
+            "        [ 87., 134.,  58.]])\n",
+            "tensor([[103., 119.],\n",
+            "        [ 22.,  37.],\n",
+            "        [ 81., 101.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.]])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0CP5rKnuWQwo",
+        "colab_type": "text"
+      },
+      "source": [
+        "##nn.Linear\n",
+        "Instead of initializing the weights & biases manually, we can define the model using the nn.Linear class from PyTorch, which does it automatically."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "BAUgB3TzWB9M",
+        "colab_type": "code",
+        "outputId": "3c23f9e5-69d2-4bce-c60c-0f7635ade599",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 0
+        }
+      },
+      "source": [
+        "# Define model \n",
+        "model = nn.Linear(3,2)\n",
+        "print(model.weight)\n",
+        "print(model.bias)\n"
+      ],
+      "execution_count": 28,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Parameter containing:\n",
+            "tensor([[-0.4605, -0.1215,  0.1973],\n",
+            "        [-0.1896,  0.5283, -0.3825]], requires_grad=True)\n",
+            "Parameter containing:\n",
+            "tensor([-0.1227, -0.0360], requires_grad=True)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "knDindS5WwvW",
+        "colab_type": "code",
+        "outputId": "8d50ebe4-16b5-43ba-e032-3ce4d8844e36",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 0
+        }
+      },
+      "source": [
+        "print(list(model.parameters()))"
+      ],
+      "execution_count": 29,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "[Parameter containing:\n",
+            "tensor([[-0.4605, -0.1215,  0.1973],\n",
+            "        [-0.1896,  0.5283, -0.3825]], requires_grad=True), Parameter containing:\n",
+            "tensor([-0.1227, -0.0360], requires_grad=True)]\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "OUiYyazeZkmY",
+        "colab_type": "code",
+        "outputId": "b41cae83-abce-4112-d960-c147c4fcb9f8",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 0
+        }
+      },
+      "source": [
+        "preds= model(inputs)\n",
+        "preds"
+      ],
+      "execution_count": 30,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "tensor([[-33.3896,   5.0722],\n",
+              "        [-40.0849,   4.7212],\n",
+              "        [-45.0139,  32.0783],\n",
+              "        [-45.0121, -10.8118],\n",
+              "        [-29.7423,  10.8245],\n",
+              "        [-33.3896,   5.0722],\n",
+              "        [-40.0849,   4.7212],\n",
+              "        [-45.0139,  32.0783],\n",
+              "        [-45.0121, -10.8118],\n",
+              "        [-29.7423,  10.8245],\n",
+              "        [-33.3896,   5.0722],\n",
+              "        [-40.0849,   4.7212],\n",
+              "        [-45.0139,  32.0783],\n",
+              "        [-45.0121, -10.8118],\n",
+              "        [-29.7423,  10.8245]], grad_fn=<AddmmBackward>)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 30
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7axCtzJuZxn1",
+        "colab_type": "code",
+        "outputId": "8f87998e-61db-451a-b402-46806cea15c1",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 0
+        }
+      },
+      "source": [
+        "print(targets)"
+      ],
+      "execution_count": 31,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor([[ 56.,  70.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.],\n",
+            "        [ 22.,  37.],\n",
+            "        [103., 119.],\n",
+            "        [ 56.,  70.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.],\n",
+            "        [ 22.,  37.],\n",
+            "        [103., 119.],\n",
+            "        [ 56.,  70.],\n",
+            "        [ 81., 101.],\n",
+            "        [119., 133.],\n",
+            "        [ 22.,  37.],\n",
+            "        [103., 119.]])\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "uLmtyjvwZ8Rl",
+        "colab_type": "text"
+      },
+      "source": [
+        "## Loss Function"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "N7Vm07RPZ0v4",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "import torch.nn.functional as f\n",
+        "loss_fn = f.mse_loss\n"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "0qLvN2RHaUpU",
+        "colab_type": "code",
+        "outputId": "ee451927-2ab1-495d-b862-b3f1813b7c10",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        }
+      },
+      "source": [
+        "loss = loss_fn(preds, targets)\n",
+        "print(loss)"
+      ],
+      "execution_count": 33,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "tensor(10932.2080, grad_fn=<MseLossBackward>)\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "esb8ATNUnmh4",
+        "colab_type": "text"
+      },
+      "source": [
+        "##Optimizer\n",
+        "Instead of manually manipulating the model's weights & biases using gradients, we can use the optimizer optim.SGD. SGD stands for stochastic gradient descent. It is called stochastic because samples are selected in batches (often with random shuffling) instead of as a single group."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "OszLD3vCoN0x",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "# Define optimizer\n",
+        "opt = torch.optim.SGD(model.parameters(), lr = 1e-5) "
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "WKi6cFi1nmes",
+        "colab_type": "text"
+      },
+      "source": [
+        "##Train the model\n",
+        "We are now ready to train the model. We'll follow the exact same process to implement gradient descent:\n",
+        "\n",
+        "1. Generate predictions\n",
+        "\n",
+        "1. Calculate the loss\n",
+        "\n",
+        "1. Compute gradients w.r.t the weights and biases\n",
+        "\n",
+        "1. Adjust the weights by subtracting a small quantity proportional to the gradient\n",
+        "\n",
+        "1. Reset the gradients to zero\n",
+        "\n",
+        "The only change is that we'll work batches of data, instead of processing the entire training data in every iteration. Let's define a utility function fit which trains the model for a given number of epochs."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "2aoZHkDXaOZJ",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        "def fit(num_epochs, model, loss_fn, opt, train_dl):\n",
+        "    \n",
+        "    # Repeat for given number of epochs\n",
+        "    for epoch in range(num_epochs):\n",
+        "        \n",
+        "        # Train with batches of data\n",
+        "        for xb,yb in train_dl:\n",
+        "            \n",
+        "            # 1. Generate predictions\n",
+        "            pred = model(xb)\n",
+        "            \n",
+        "            # 2. Calculate loss\n",
+        "            loss = loss_fn(pred, yb)\n",
+        "            \n",
+        "            # 3. Compute gradients\n",
+        "            loss.backward()\n",
+        "            \n",
+        "            # 4. Update parameters using gradients\n",
+        "            opt.step()\n",
+        "            \n",
+        "            # 5. Reset the gradients to zero\n",
+        "            opt.zero_grad()\n",
+        "        \n",
+        "        # Print the progress\n",
+        "        if (epoch+1) % 10 == 0:\n",
+        "            print('Epoch [{}/{}], Loss: {:.4f}'.format(epoch+1, num_epochs, loss.item()))"
+      ],
+      "execution_count": 0,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "W8EqXUjKjqTJ",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 357
+        },
+        "outputId": "80938d42-e13b-4995-d93a-a9e6677e86eb"
+      },
+      "source": [
+        "fit(200, model, loss_fn, opt,train_dl)"
+      ],
+      "execution_count": 37,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "text": [
+            "Epoch [10/200], Loss: 115.3670\n",
+            "Epoch [20/200], Loss: 94.2249\n",
+            "Epoch [30/200], Loss: 134.6416\n",
+            "Epoch [40/200], Loss: 80.8137\n",
+            "Epoch [50/200], Loss: 55.9508\n",
+            "Epoch [60/200], Loss: 61.6654\n",
+            "Epoch [70/200], Loss: 31.9624\n",
+            "Epoch [80/200], Loss: 62.2898\n",
+            "Epoch [90/200], Loss: 38.9312\n",
+            "Epoch [100/200], Loss: 48.6849\n",
+            "Epoch [110/200], Loss: 30.0201\n",
+            "Epoch [120/200], Loss: 24.6369\n",
+            "Epoch [130/200], Loss: 26.8217\n",
+            "Epoch [140/200], Loss: 14.1122\n",
+            "Epoch [150/200], Loss: 23.1439\n",
+            "Epoch [160/200], Loss: 32.7236\n",
+            "Epoch [170/200], Loss: 31.9469\n",
+            "Epoch [180/200], Loss: 26.3564\n",
+            "Epoch [190/200], Loss: 18.8793\n",
+            "Epoch [200/200], Loss: 21.7486\n"
+          ],
+          "name": "stdout"
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "WWvzClB_j5m6",
+        "colab_type": "text"
+      },
+      "source": [
+        "generate predictions using our model and verify that they're close to our targets."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "O7bki7RojwDh",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 272
+        },
+        "outputId": "35eb8c46-3659-4f27-cb77-bdf50ba3028d"
+      },
+      "source": [
+        "preds = model(inputs)\n",
+        "preds"
+      ],
+      "execution_count": 38,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "tensor([[ 57.3136,  71.1518],\n",
+              "        [ 81.9933,  96.8169],\n",
+              "        [119.0840, 142.0462],\n",
+              "        [ 21.9149,  40.1657],\n",
+              "        [101.0284, 110.4682],\n",
+              "        [ 57.3136,  71.1518],\n",
+              "        [ 81.9933,  96.8169],\n",
+              "        [119.0840, 142.0462],\n",
+              "        [ 21.9149,  40.1657],\n",
+              "        [101.0284, 110.4682],\n",
+              "        [ 57.3136,  71.1518],\n",
+              "        [ 81.9933,  96.8169],\n",
+              "        [119.0840, 142.0462],\n",
+              "        [ 21.9149,  40.1657],\n",
+              "        [101.0284, 110.4682]], grad_fn=<AddmmBackward>)"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 38
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "vzUHpak_kBnz",
+        "colab_type": "text"
+      },
+      "source": [
+        "#### Compare with targets\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "4qMDf5pkj-mj",
+        "colab_type": "code",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 272
+        },
+        "outputId": "a6a9ee16-09c1-406d-aef7-32193200aab8"
+      },
+      "source": [
+        "targets"
+      ],
+      "execution_count": 39,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "tensor([[ 56.,  70.],\n",
+              "        [ 81., 101.],\n",
+              "        [119., 133.],\n",
+              "        [ 22.,  37.],\n",
+              "        [103., 119.],\n",
+              "        [ 56.,  70.],\n",
+              "        [ 81., 101.],\n",
+              "        [119., 133.],\n",
+              "        [ 22.,  37.],\n",
+              "        [103., 119.],\n",
+              "        [ 56.,  70.],\n",
+              "        [ 81., 101.],\n",
+              "        [119., 133.],\n",
+              "        [ 22.,  37.],\n",
+              "        [103., 119.]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 39
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "TtUBHLPRkKq0",
+        "colab_type": "text"
+      },
+      "source": [
+        "Indeed, the predictions are quite close to our targets, and now we have a fairly good model to predict crop yields for apples and oranges by looking at the average temperature, rainfall and humidity in a region."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ftCAtC_nkE4B",
+        "colab_type": "code",
+        "colab": {}
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": 0,
+      "outputs": []
+    }
+  ]
+}
